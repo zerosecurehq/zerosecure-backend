@@ -1,13 +1,14 @@
 import express from "express";
 import utilsRouter from "./routes/utils/";
 import transactionsRouter from "./routes/transactions/";
-
+import cors from "cors";
 const router = express.Router({ mergeParams: true });
 
 namespace Http {
   export async function createHttpServer() {
     const app = express();
     app.use(express.json());
+    app.use(cors());
 
     router.use((req, res, next) => {
       const network = req.params.network;

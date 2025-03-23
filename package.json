@@ -13,8 +13,7 @@
   "dependencies": {
     "@doko-js/wasm": "^1.0.0",
     "@provablehq/sdk": "^0.8.6",
-    "@types/crypto-js": "^4.2.2",
-    "@types/express": "^5.0.1",
+    "cors": "^2.8.5",
     "crypto-js": "^4.2.0",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
@@ -22,6 +21,9 @@
     "mongodb": "^6.15.0"
   },
   "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/crypto-js": "^4.2.2",
+    "@types/express": "^5.0.1",
     "@types/log": "^6.3.3",
     "@types/node": "^22.13.11",
     "rimraf": "^6.0.1",
