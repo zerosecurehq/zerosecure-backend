@@ -1,5 +1,6 @@
 import express from "express";
 import * as TestnetSdk from "@provablehq/sdk/testnet.js";
+import { Hasher } from "@doko-js/wasm";
 
 const router = express.Router();
 
@@ -23,6 +24,30 @@ router.get("/randomField", (_, res) => {
     res
       .status(500)
       .send("An error occurred while generating a random field element");
+  }
+});
+
+router.post("/hashAddressToField", (req, res) => {
+  try {
+    let walletAddress = req.body.wallet_address;
+    if (!walletAddress) {
+      res.status(400).send("Wallet address is required");
+      return;
+    }
+    let walletHashedToField: string = Hasher.hash(
+      "bhp256",
+      walletAddress,
+      "field",
+      {
+        mainnet: "mainnet",
+        testnetbeta: "testnet",
+      }[req.network]
+    );
+    res.send(walletHashedToField);
+  } catch (error) {
+    res
+      .status(500)
+      .send("An error occurred while hashing the address to field");
   }
 });
 
