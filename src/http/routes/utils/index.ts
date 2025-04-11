@@ -51,4 +51,29 @@ router.post("/hashAddressToField", (req, res) => {
   }
 });
 
+router.post("/hashBalanceKeyToField", async (req, res) => {
+  try {
+    let walletAddress: string = req.body.wallet_address;
+    let tokenId: string = req.body.token_id;
+    if (!walletAddress || !tokenId) {
+      res.status(400).send("Wallet address and token id are required");
+      return;
+    }
+    const hashedValue = Hasher.hash(
+      "bhp256",
+      `{wallet_address: ${walletAddress}, token_id: ${tokenId}}`, // input value
+      "field",
+      {
+        mainnet: "mainnet",
+        testnetbeta: "testnet",
+      }[req.network]
+    );
+    res.send(hashedValue);
+  } catch (error) {
+    res
+      .status(500)
+      .send("An error occurred while hashing the balance key to field");
+  }
+});
+
 export default router;
