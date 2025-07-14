@@ -1,3 +1,5 @@
+export * from "./logger";
+
 import { SupportedNetwork } from "@/types";
 
 namespace Utils {

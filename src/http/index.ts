@@ -2,6 +2,7 @@ import express from "express";
 import utilsRouter from "./routes/utils/";
 import transactionsRouter from "./routes/transactions/";
 import cors from "cors";
+import LOG from "@/utils/logger";
 const router = express.Router({ mergeParams: true });
 
 namespace Http {
@@ -25,7 +26,7 @@ namespace Http {
     app.use("/:network", router);
 
     app.listen(process.env.HTTP_PORT, () => {
-      console.log(`Server is running on port ${process.env.HTTP_PORT}`);
+      LOG("http", `HTTP server started on port ${process.env.HTTP_PORT}`);
     });
   }
 }

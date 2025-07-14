@@ -1,6 +1,7 @@
 import ZeroDb from "@/db";
 import { DbTransaction, SupportedNetwork } from "@/types";
 import { Timer, Utils } from "@/utils";
+import LOG from "@/utils/logger";
 
 namespace TransactionManager {
   let transferIdsMap = new Map<
@@ -34,7 +35,7 @@ namespace TransactionManager {
           }
         }
       } catch (error) {
-        console.log("TransactionManager.init", error);
+        LOG("error", "TransactionManager.init error: " + error);
       }
     }
   }
@@ -52,7 +53,7 @@ namespace TransactionManager {
         });
       });
     } catch (error) {
-      console.log("TransactionManager.pullFromDbToPool", error);
+      LOG("error", "TransactionManager.pullFromDbToPool error: " + error);
     }
   }
   export async function pushToPool(
@@ -60,7 +61,10 @@ namespace TransactionManager {
     transferId: string
   ) {
     transferIdsMap.set(transferId, { network });
-    console.log(transferIdsMap.get(transferId));
+    LOG(
+      "sys",
+      `Transaction ${transferId} is added to pool for network ${network}`
+    );
   }
   export async function markAsFinalized(transferId: string) {
     try {
@@ -72,9 +76,9 @@ namespace TransactionManager {
       // remove from pool
       transferIdsMap.delete(transferId);
 
-      console.log(`Transaction ${transferId} is finalized`);
+      LOG("sys", `Transaction ${transferId} is marked as finalized`);
     } catch (error) {
-      console.log("TransactionManager.markAsFinalized", error);
+      LOG("error", `TransactionManager.markAsFinalized error: ${error}`);
     }
   }
 }

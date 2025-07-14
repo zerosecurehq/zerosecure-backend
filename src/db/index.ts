@@ -1,3 +1,4 @@
+import LOG from "@/utils/logger";
 import { Db, MongoClient } from "mongodb";
 
 namespace ZeroDb {
@@ -9,14 +10,16 @@ namespace ZeroDb {
 
   export async function connect() {
     if (!url) {
-      return console.log(
-        "WARNING: MONGODB_URI is not set, all database operations will throw errors"
+      LOG(
+        "warning",
+        "MONGODB_URI is not set, all database operations will throw errors"
       );
+      return;
     }
     const client = new MongoClient(url);
     await client.connect();
     db = client.db(dbName);
-    console.log("Connected successfully to mongodb server " + url);
+    LOG("sys", "Connected to MongoDB at " + url);
   }
 
   export function getDb() {

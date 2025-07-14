@@ -4,6 +4,7 @@ import { DbTransaction } from "@/types";
 import ZeroDb from "@/db";
 import TransactionManager from "@/managers/transaction-manager";
 import { Hasher } from "@doko-js/wasm";
+import LOG from "@/utils/logger";
 
 const router = express.Router();
 
@@ -95,7 +96,7 @@ router.post("/", async (req, res) => {
     TransactionManager.pushToPool(req.network, transferId);
     res.send("");
   } catch (error) {
-    console.log("Error while inserting transaction", error);
+    LOG("error", "Error while inserting transaction: " + error);
     res.status(500).send(`${error}`);
   }
 });
