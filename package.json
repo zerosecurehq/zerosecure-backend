@@ -11,8 +11,10 @@
     "dev": "npm run build && node dist/index.js"
   },
   "dependencies": {
-    "@doko-js/wasm": "^1.0.0",
-    "@provablehq/sdk": "^0.8.6",
+    "@doko-js/wasm": "1.0.0",
+    "@provablehq/sdk": "^0.9.3",
+    "@rollup/plugin-node-resolve": "^16.0.1",
+    "@rollup/plugin-wasm": "^6.2.2",
     "chalk": "^5.4.1",
     "cors": "^2.8.5",
     "crypto-js": "^4.2.0",
