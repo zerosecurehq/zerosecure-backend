@@ -6,7 +6,8 @@ namespace Utils {
   export async function getMappingValue(
     network: SupportedNetwork,
     mapping: "balances" | "transfers_status",
-    key: string
+    key: string,
+    programId: string
   ): Promise<{
     result: string | null;
   }> {
@@ -20,7 +21,7 @@ namespace Utils {
         id: 1,
         method: "getMappingValue",
         params: {
-          program_id: process.env.ZEROSECURE_PROGRAM_ID,
+          program_id: programId,
           mapping_name: mapping,
           key: key,
         },

@@ -18,3 +18,7 @@ program hashing_program.aleo {
        });
     }
 }`;
+
+export const WALLET_MANAGER_PROGRAM_ID = "zero_wallet_manager_v7.aleo";
+export const TRANSFER_MANAGER_PROGRAM_ID = "zero_transfer_manager_v7.aleo";
+export const GOVERNANCE_MANAGER_PROGRAM_ID = "zero_governance_manager_v7.aleo";

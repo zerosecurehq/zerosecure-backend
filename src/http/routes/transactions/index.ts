@@ -5,8 +5,11 @@ import ZeroDb from "@/db";
 import TransactionManager from "@/managers/transaction-manager";
 import { Hasher } from "@doko-js/wasm";
 import LOG from "@/utils/logger";
+import { TRANSFER_MANAGER_PROGRAM_ID } from "@/const";
 
 const router = express.Router();
+
+const transferIds: Set<string> = new Set();
 
 router.get("/:address", async (req, res) => {
   try {
@@ -78,7 +81,8 @@ router.post("/", async (req, res) => {
               mainnet: "mainnet",
               testnetbeta: "testnet",
             }[req.network]
-          )
+          ),
+          TRANSFER_MANAGER_PROGRAM_ID
         )
       ).result === null
     ) {
@@ -148,6 +152,12 @@ router.post("/saveTransfer", async (req, res) => {
       return;
     }
 
+    // Check if transferId is already being processed
+    if (transferIds.has(transferId)) {
+      res.status(400).send("Transfer ID is already being processed");
+      return;
+    }
+
     const walletHashedToField: string = Hasher.hash(
       "bhp256",
       from,
@@ -161,13 +171,26 @@ router.post("/saveTransfer", async (req, res) => {
       throw new Error("Invalid wallet address");
     }
 
-    const mappingResponse = await Utils.getMappingValue(
+    const walletMappingResponse = await Utils.getMappingValue(
       req.network,
       "balances",
-      walletHashedToField
+      walletHashedToField,
+      TRANSFER_MANAGER_PROGRAM_ID
     );
-    if (mappingResponse.result === null) {
+    if (walletMappingResponse.result === null) {
       res.status(400).send("Wallet does not exist");
+      return;
+    }
+
+    const transferMappingResponse = await Utils.getMappingValue(
+      req.network,
+      "transfers_status",
+      transferId,
+      TRANSFER_MANAGER_PROGRAM_ID
+    );
+    
+    if (transferMappingResponse.result === null) {
+      res.status(400).send("Transfer ID does not exist");
       return;
     }
 
@@ -185,12 +208,14 @@ router.post("/saveTransfer", async (req, res) => {
 
     await ZeroDb.getTransactionsCollection().insertOne(transaction);
 
+    transferIds.add(transferId);
     TransactionManager.pushToPool(req.network, transferId);
-    res.send("Transfer saved");
-    TransactionManager.scanBlockchainUntilResult(req.network, transferId);
+    res.status(200).send("Transfer saved");
+
+    TransactionManager.scanAndUpdate(transferIds, req.network, transferId);
   } catch (error) {
     LOG("error", `Error while saving transfer: ${error}`);
-    res.status(500).send(`${error}`);
+    res.status(500).send(`Error saving transfer: ${error}`);
   }
 });
 
