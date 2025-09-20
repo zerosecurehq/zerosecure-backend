@@ -103,11 +103,30 @@ router.post("/", async (req, res) => {
 
 router.post("/saveTransfer", async (req, res) => {
   try {
-    const { from, timestamp, status, transferId, publicKey, encryptedData } =
-      req.body;
+    const {
+      from,
+      to,
+      amount,
+      timestamp,
+      status,
+      transferId,
+      publicKey,
+      encryptedData,
+    } = req.body as {
+      from: string;
+      to: string;
+      amount: number;
+      timestamp: number;
+      status: "pending" | "finalized" | "failed";
+      transferId: string;
+      publicKey: string;
+      encryptedData?: string;
+    };
 
     if (
       !from ||
+      !to ||
+      amount === undefined ||
       !timestamp ||
       !status ||
       !transferId ||
@@ -117,7 +136,7 @@ router.post("/saveTransfer", async (req, res) => {
       res
         .status(400)
         .send(
-          "Missing required fields: from, timestamp, status, transferId, publicKey, or encryptedData"
+          "Missing required fields: from, to, amount, timestamp, status, transferId, or publicKey"
         );
       return;
     }
@@ -129,10 +148,9 @@ router.post("/saveTransfer", async (req, res) => {
       return;
     }
 
-    const walletAddress = from;
-    let walletHashedToField: string = Hasher.hash(
+    const walletHashedToField: string = Hasher.hash(
       "bhp256",
-      walletAddress,
+      from,
       "field",
       {
         mainnet: "mainnet",
@@ -157,15 +175,19 @@ router.post("/saveTransfer", async (req, res) => {
       network: req.network,
       state: status,
       timestamp,
-      walletAddress,
+      walletAddress: from,
       transferId,
       data: encryptedData,
       publicKey,
+      to,
+      amount,
     };
 
     await ZeroDb.getTransactionsCollection().insertOne(transaction);
+
     TransactionManager.pushToPool(req.network, transferId);
-    res.send("");
+    res.send("Transfer saved");
+    TransactionManager.scanBlockchainUntilResult(req.network, transferId);
   } catch (error) {
     LOG("error", `Error while saving transfer: ${error}`);
     res.status(500).send(`${error}`);
@@ -206,47 +228,6 @@ router.get("/getTransfers", async (req, res) => {
     res.send(rawHistory);
   } catch (error) {
     LOG("error", `Error while fetching transfers: ${error}`);
-    res.status(500).send(`${error}`);
-  }
-});
-
-router.put("/updateTransferStatus", async (req, res) => {
-  try {
-    const { transferId, status, publicKey } = req.body;
-
-    if (!transferId || !status || !publicKey) {
-      res
-        .status(400)
-        .send("Missing required fields: transferId, status, or publicKey");
-      return;
-    }
-
-    if (!["pending", "finalized", "failed"].includes(status)) {
-      res
-        .status(400)
-        .send("Invalid status: must be pending, finalized, or failed");
-      return;
-    }
-
-    const result = await ZeroDb.getTransactionsCollection().updateOne(
-      {
-        network: req.network,
-        transferId,
-        publicKey,
-      },
-      {
-        $set: { state: status },
-      }
-    );
-
-    if (result.matchedCount === 0) {
-      res.status(404).send("Transfer not found");
-      return;
-    }
-
-    res.send("");
-  } catch (error) {
-    LOG("error", `Error while updating transfer status: ${error}`);
     res.status(500).send(`${error}`);
   }
 });

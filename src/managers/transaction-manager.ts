@@ -81,6 +81,60 @@ namespace TransactionManager {
       LOG("error", `TransactionManager.markAsFinalized error: ${error}`);
     }
   }
+  export async function scanBlockchainUntilResult(
+    network: SupportedNetwork,
+    transferId: string
+  ) {
+    try {
+      const maxAttempts = 30; 
+      const pollingInterval = Timer.ONE_SECOND * 5;
+
+      for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        const result = await Utils.getMappingValue(
+          network,
+          "transfers_status",
+          transferId
+        );
+
+        if (result.result === null) {
+          await markAsFinalized(transferId);
+          LOG(
+            "sys",
+            `Blockchain scan: Transaction ${transferId} marked as finalized after ${attempt} attempts`
+          );
+          return;
+        }
+
+        LOG(
+          "sys",
+          `Blockchain scan: Transaction ${transferId} still pending after ${attempt} attempts`
+        );
+        await Timer.sleep(pollingInterval);
+      }
+
+      await ZeroDb.getTransactionsCollection().updateOne(
+        { transferId },
+        { $set: { state: "failed" } }
+      );
+      transferIdsMap.delete(transferId);
+      LOG(
+        "sys",
+        `Blockchain scan: Transaction ${transferId} marked as failed after ${maxAttempts} attempts`
+      );
+    } catch (error) {
+      LOG(
+        "error",
+        `TransactionManager.scanBlockchainUntilResult error: ${error}`
+      );
+      
+      await ZeroDb.getTransactionsCollection().updateOne(
+        { transferId },
+        { $set: { state: "failed" } }
+      );
+      transferIdsMap.delete(transferId);
+      LOG("sys", `Transaction ${transferId} marked as failed due to error`);
+    }
+  }
 }
 
 export default TransactionManager;

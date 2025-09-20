@@ -6,6 +6,8 @@ export interface DbTransaction {
   transferId: string;
   data: string;
   publicKey?: string;
+  to: string;
+  amount: number;
 }
 
 export type SupportedNetwork = "testnetbeta" | "mainnet";
