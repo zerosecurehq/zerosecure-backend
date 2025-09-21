@@ -8,6 +8,7 @@ export interface DbTransaction {
   publicKey?: string;
   to: string;
   amount: number;
+  from: string;
 }
 
 export type SupportedNetwork = "testnetbeta" | "mainnet";

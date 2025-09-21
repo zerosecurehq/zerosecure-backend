@@ -119,7 +119,7 @@ router.post("/saveTransfer", async (req, res) => {
     } = req.body as {
       from: string;
       to: string;
-      amount: number;
+      amount: string;
       timestamp: number;
       status: "pending" | "finalized" | "failed";
       transferId: string;
@@ -130,7 +130,7 @@ router.post("/saveTransfer", async (req, res) => {
     if (
       !from ||
       !to ||
-      amount === undefined ||
+      !amount ||
       !timestamp ||
       !status ||
       !transferId ||
@@ -194,7 +194,7 @@ router.post("/saveTransfer", async (req, res) => {
       return;
     }
 
-    const transaction: DbTransaction = {
+    const transaction = {
       network: req.network,
       state: status,
       timestamp,
@@ -204,6 +204,7 @@ router.post("/saveTransfer", async (req, res) => {
       publicKey,
       to,
       amount,
+      from,
     };
 
     await ZeroDb.getTransactionsCollection().insertOne(transaction);
