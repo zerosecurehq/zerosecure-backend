@@ -116,16 +116,7 @@ router.post("/saveTransfer", async (req, res) => {
       transferId,
       publicKey,
       encryptedData,
-    } = req.body as {
-      from: string;
-      to: string;
-      amount: string;
-      timestamp: number;
-      status: "pending" | "finalized" | "failed";
-      transferId: string;
-      publicKey: string;
-      encryptedData?: string;
-    };
+    } = req.body;
 
     if (
       !from ||
@@ -137,28 +128,20 @@ router.post("/saveTransfer", async (req, res) => {
       !publicKey ||
       !encryptedData
     ) {
-      res
-        .status(400)
-        .send(
-          "Missing required fields: from, to, amount, timestamp, status, transferId, or publicKey"
-        );
-      return;
+      return res.status(400).json({ error: "Missing required fields" });
     }
 
     if (!["pending", "finalized", "failed"].includes(status)) {
-      res
-        .status(400)
-        .send("Invalid status: must be pending, finalized, or failed");
-      return;
+      return res.status(400).json({ error: "Invalid status value" });
     }
 
-    // Check if transferId is already being processed
     if (transferIds.has(transferId)) {
-      res.status(400).send("Transfer ID is already being processed");
-      return;
+      return res
+        .status(409)
+        .json({ error: "Transfer ID is already being processed" });
     }
 
-    const walletHashedToField: string = Hasher.hash(
+    const walletHashedToField = Hasher.hash(
       "bhp256",
       from,
       "field",
@@ -167,8 +150,9 @@ router.post("/saveTransfer", async (req, res) => {
         testnetbeta: "testnet",
       }[req.network]
     );
+
     if (walletHashedToField.includes(" ")) {
-      throw new Error("Invalid wallet address");
+      return res.status(400).json({ error: "Invalid wallet address" });
     }
 
     const walletMappingResponse = await Utils.getMappingValue(
@@ -178,8 +162,7 @@ router.post("/saveTransfer", async (req, res) => {
       TRANSFER_MANAGER_PROGRAM_ID
     );
     if (walletMappingResponse.result === null) {
-      res.status(400).send("Wallet does not exist");
-      return;
+      return res.status(404).json({ error: "Wallet does not exist" });
     }
 
     const transferMappingResponse = await Utils.getMappingValue(
@@ -188,10 +171,8 @@ router.post("/saveTransfer", async (req, res) => {
       transferId,
       TRANSFER_MANAGER_PROGRAM_ID
     );
-    
     if (transferMappingResponse.result === null) {
-      res.status(400).send("Transfer ID does not exist");
-      return;
+      return res.status(404).json({ error: "Transfer ID does not exist" });
     }
 
     const transaction = {
@@ -211,12 +192,12 @@ router.post("/saveTransfer", async (req, res) => {
 
     transferIds.add(transferId);
     TransactionManager.pushToPool(req.network, transferId);
-    res.status(200).send("Transfer saved");
+    res.status(200).json({ message: "Transfer saved" });
 
     TransactionManager.scanAndUpdate(transferIds, req.network, transferId);
-  } catch (error) {
+  } catch (error: any) {
     LOG("error", `Error while saving transfer: ${error}`);
-    res.status(500).send(`Error saving transfer: ${error}`);
+    res.status(500).json({ error: error.message });
   }
 });
 
